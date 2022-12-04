@@ -40,7 +40,7 @@ public class ClassDeclaration {
 
     private IEnumerable<string> GenerateUniqueMethodNames(Dictionary<string, int> methodNames) {
         return methodNames.SelectMany(entry => Enumerable.Range(0, entry.Value)
-            .Select(i => entry.Key + (i + 1) + "Test")
+            .Select(i => entry.Value == 1 ? entry.Key + "Test" : entry.Key + (i + 1) + "Test")
             .ToArray()
         );
     }
