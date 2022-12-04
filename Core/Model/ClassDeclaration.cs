@@ -6,10 +6,10 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 namespace Core.Model;
 
 public class ClassDeclaration {
-    public ClassDeclarationSyntax ClassDeclarationSyntax => _classDeclarationSyntax;
+    public MemberDeclarationSyntax ClassDeclarationSyntax => _classDeclarationSyntax;
     
     private IReadOnlyList<MethodDeclaration> _methodDeclarations;
-    private ClassDeclarationSyntax _classDeclarationSyntax;
+    private MemberDeclarationSyntax _classDeclarationSyntax;
 
     public ClassDeclaration(ClassDeclarationSyntax classDeclaration) {
         var methods = GetPublicMethods(classDeclaration);
@@ -45,11 +45,27 @@ public class ClassDeclaration {
         );
     }
 
-    private ClassDeclarationSyntax GenerateClassDeclaration(ClassDeclarationSyntax classDeclaration) {
-        return ClassDeclaration(classDeclaration.Identifier.Text + "Test")
+    private MemberDeclarationSyntax GenerateClassDeclaration(ClassDeclarationSyntax classDeclaration) {
+        var classDeclarationSyntax = ClassDeclaration(classDeclaration.Identifier.Text + "Test")
             .AddModifiers(Token(SyntaxKind.PublicKeyword))
             .WithMembers(GetMethodsDeclarationSyntax())
             .WithAttributeLists(SingletonList(GenerateTestFixtureAttributeSyntax()));
+        return GenerateNamespaceHierarchy(classDeclaration, classDeclarationSyntax);
+    }
+
+    private MemberDeclarationSyntax GenerateNamespaceHierarchy(ClassDeclarationSyntax classDeclaration, ClassDeclarationSyntax generatedClassDeclaration) {
+        var first = true;
+        SyntaxNode current = classDeclaration;
+        var currentSyntaxNode = current;
+        while (current.Parent is NamespaceDeclarationSyntax outerNamespace) {
+            var namespaceDeclaration = NamespaceDeclaration(first ? IdentifierName(outerNamespace.Name + ".Tests") : outerNamespace.Name)
+                .WithMembers(first ? new SyntaxList<MemberDeclarationSyntax>(generatedClassDeclaration) : 
+                    new SyntaxList<MemberDeclarationSyntax>((NamespaceDeclarationSyntax)currentSyntaxNode));
+            first = false;
+            currentSyntaxNode = namespaceDeclaration;
+            current = current.Parent;
+        }
+        return (MemberDeclarationSyntax)currentSyntaxNode;
     }
 
     private SyntaxList<MemberDeclarationSyntax> GetMethodsDeclarationSyntax() {
@@ -59,7 +75,7 @@ public class ClassDeclaration {
 
     private AttributeListSyntax GenerateTestFixtureAttributeSyntax() {
         return AttributeList(
-            SingletonSeparatedList<AttributeSyntax>(
+            SingletonSeparatedList(
                 Attribute(
                     IdentifierName("TestFixture"))));
     }
