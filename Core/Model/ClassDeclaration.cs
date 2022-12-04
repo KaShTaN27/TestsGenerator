@@ -50,7 +50,9 @@ public class ClassDeclaration {
             .AddModifiers(Token(SyntaxKind.PublicKeyword))
             .WithMembers(GetMethodsDeclarationSyntax())
             .WithAttributeLists(SingletonList(GenerateTestFixtureAttributeSyntax()));
-        return GenerateNamespaceHierarchy(classDeclaration, classDeclarationSyntax);
+        return classDeclaration.Parent is NamespaceDeclarationSyntax ? 
+            GenerateNamespaceHierarchy(classDeclaration, classDeclarationSyntax) : 
+            classDeclarationSyntax;
     }
 
     private MemberDeclarationSyntax GenerateNamespaceHierarchy(ClassDeclarationSyntax classDeclaration, ClassDeclarationSyntax generatedClassDeclaration) {
