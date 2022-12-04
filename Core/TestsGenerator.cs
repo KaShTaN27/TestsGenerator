@@ -12,10 +12,10 @@ public class TestsGenerator {
     private List<UsingDirectiveSyntax>? _usings;
     private IEnumerable<ClassDeclarationSyntax>? _classes;
 
-    public Dictionary<string, string> Generate(string source) {
+    public List<GeneratedTestClass> Generate(string source) {
         InitializeMetaData(source);
-        return _classes!.ToDictionary(
-            classSyntax => classSyntax.Identifier.Text + "Tests.cs", GetTestClassCode);
+        return _classes!.Select(classSyntax =>
+            new GeneratedTestClass(classSyntax.Identifier.Text + "Tests.cs", GetTestClassCode(classSyntax))).ToList();
     }
 
     private void InitializeMetaData(string source) {
